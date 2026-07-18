@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Dazzled.Api/Dazzled.Api.csproj" />
+    <Project Path="src/Dazzled.Application/Dazzled.Application.csproj" />
+    <Project Path="src/Dazzled.Contracts/Dazzled.Contracts.csproj" />
+    <Project Path="src/Dazzled.Domain/Dazzled.Domain.csproj" />
+    <Project Path="src/Dazzled.Infrastructure/Dazzled.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Dazzled.IntegrationTests/Dazzled.IntegrationTests.csproj" />
+    <Project Path="tests/Dazzled.UnitTests/Dazzled.UnitTests.csproj" />
+  </Folder>
+</Solution>
