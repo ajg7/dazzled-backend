@@ -173,7 +173,9 @@ SMTP_FROM=alerts@dazzled.dev
 
 ---
 
-## Phase 1 — `dazzled-backend`: Skeleton & Foundations
+## Phase 1 — `dazzled-backend`: Skeleton & Foundations ✅ DONE
+
+**Status: ✅ Done** — _completed 2026-07-18._ Solution builds clean (0 warnings, 0 errors). Auth (JWT + `ITokenService`), EF Core, MassTransit + EF outbox, and Hangfire are all wired per §1.3. All 3 migrations (`InitialCreate`, `AddAuthAndOutbox`, `AddCoreSchema`) are applied to the `DazzledDb` database. Test projects are scaffolded (real coverage lands in Phase 11). **Ready for Phase 2.**
 
 **Goal:** A running .NET solution with auth, EF Core, MassTransit, and Hangfire wired but no real business logic yet.
 
@@ -1134,7 +1136,7 @@ Don't run `Database.Migrate()` in `Program.cs` in production — it's a deployme
 | Phase | Repo | Deliverable |
 |---|---|---|
 | 0 | infra | Full backing stack running via `docker compose up` |
-| 1 | backend | Running API: auth, migrations, MassTransit, Hangfire wired |
+| 1 | backend | ✅ **Done** — Running API: auth, migrations, MassTransit, Hangfire wired |
 | 2 | backend | All CRUD endpoints for Users, Services, Policies, Schedules |
 | 3 | backend | Ingest endpoint → Alert → Incident via RabbitMQ consumers |
 | 4 | backend | Escalation engine with Hangfire timeouts |

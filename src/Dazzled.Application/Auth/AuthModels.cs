@@ -1,6 +1,6 @@
 using Dazzled.Domain.Enums;
 
-namespace Dazzled.Api.Auth;
+namespace Dazzled.Application.Auth;
 
 public record LoginRequest(string Email, string Password);
 

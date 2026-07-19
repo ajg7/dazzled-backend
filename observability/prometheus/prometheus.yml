@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # The Dazzled API runs on the host via `dotnet run` (http profile => port 5093).
+  # host.docker.internal resolves to the host machine from inside Docker Desktop.
+  #
+  # NOTE: if you run the *https* launch profile, app.UseHttpsRedirection() will 307
+  # http requests to 7188. In that case point this at host.docker.internal:7188 and
+  # add:  scheme: https  +  tls_config: { insecure_skip_verify: true }
+  - job_name: dazzled-api
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - host.docker.internal:5093
+
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090

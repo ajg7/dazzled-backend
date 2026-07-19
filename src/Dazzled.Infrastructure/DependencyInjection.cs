@@ -16,6 +16,9 @@ public static class DependencyInjection
             options.UseSqlServer(configuration.GetConnectionString("Default")));
 
         services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ITeamsRepository, TeamsRepository>();
 
         services.AddMassTransit(x =>
         {

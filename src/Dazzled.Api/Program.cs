@@ -1,4 +1,5 @@
 using Dazzled.Api.Hubs;
+using Dazzled.Application;
 using Dazzled.Infrastructure;
 using Dazzled.Infrastructure.Auth;
 using Dazzled.Infrastructure.Data;
@@ -6,18 +7,38 @@ using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using Serilog;
+using Serilog.Sinks.Grafana.Loki;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Default");
 
-// 1. Serilog
+// 1. Serilog (Console + Grafana Loki for centralized log search)
 builder.Host.UseSerilog((context, config) =>
-    config.ReadFrom.Configuration(context.Configuration).WriteTo.Console());
+    config.ReadFrom.Configuration(context.Configuration)
+        .WriteTo.Console()
+        .WriteTo.GrafanaLoki(
+            context.Configuration["Loki:Url"] ?? "http://localhost:3100",
+            labels: [new LokiLabel { Key = "app", Value = "dazzled-api" }]));
 
-// 2 & 4. DbContext, MassTransit (+ outbox), token service
+// 2 & 4. DbContext, MassTransit (+ outbox), token service, repositories
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// Application orchestrators
+builder.Services.AddApplication();
+
+// OpenTelemetry metrics (scraped by Prometheus at /metrics)
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("dazzled-api"))
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddPrometheusExporter());
 
 // 3. JWT auth
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
@@ -54,7 +75,24 @@ builder.Services.AddHealthChecks().AddSqlServer(connectionString!);
 // 9. Controllers + Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    // "Authorize" button in Swagger UI: paste the token from /api/v1/auth/login
+    // (raw JWT — the "Bearer " prefix is added automatically).
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Paste the JWT returned by /api/v1/auth/login."
+    });
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        { new OpenApiSecuritySchemeReference("Bearer", document), [] }
+    });
+});
 
 var app = builder.Build();
 
@@ -75,6 +113,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapPrometheusScrapingEndpoint(); // exposes /metrics for Prometheus
 app.MapHub<IncidentHub>("/hubs/incidents");
 app.UseHangfireDashboard("/hangfire");
 app.MapHealthChecks("/health");

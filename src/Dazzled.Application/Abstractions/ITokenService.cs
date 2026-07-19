@@ -1,4 +1,4 @@
-using Dazzled.Domain;
+using Dazzled.Domain.Entities;
 using System.Security.Claims;
 
 namespace Dazzled.Application.Abstractions;

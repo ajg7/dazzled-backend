@@ -1,0 +1,50 @@
+# Local application infrastructure for Dazzled: SQL Server + RabbitMQ.
+# Pairs with docker-compose.observability.yml (Loki / Prometheus / Grafana).
+#
+#   docker compose up -d                    # just SQL + RabbitMQ
+#   # bring up everything (infra + observability) in one go:
+#   docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+#
+# SQL Server:      localhost,1433   (sa / Dazzl3dLocalDev)
+# RabbitMQ:        localhost:5672   (dazzled / dazzled_secret, vhost "/")
+# RabbitMQ UI:     http://localhost:15672
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Dazzl3dLocalDev
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: dazzled-rabbit
+    environment:
+      - RABBITMQ_DEFAULT_USER=dazzled
+      - RABBITMQ_DEFAULT_PASS=dazzled_secret
+      - RABBITMQ_DEFAULT_VHOST=/
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  sqlserver-data:
+  rabbitmq-data:

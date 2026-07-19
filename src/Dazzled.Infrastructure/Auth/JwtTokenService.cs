@@ -1,5 +1,5 @@
 using Dazzled.Application.Abstractions;
-using Dazzled.Domain;
+using Dazzled.Domain.Entities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;

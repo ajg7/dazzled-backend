@@ -1,8 +1,8 @@
-﻿using Dazzled.Domain.Enums;
+using Dazzled.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Dazzled.Domain;
+namespace Dazzled.Domain.Entities;
 
 [Table("Notifications")]
 public class Notification
@@ -15,5 +15,8 @@ public class Notification
     public User? User { get; set; }
     public required Channels Channel { get; set; }
     public required NotificationStatuses Status { get; set; }
+    [MaxLength(200)]
+    public string? ProviderMessageId { get; set; }
     public DateTimeOffset DateSent { get; set; }
+    public DateTimeOffset? AckedAtUtc { get; set; }
 }
