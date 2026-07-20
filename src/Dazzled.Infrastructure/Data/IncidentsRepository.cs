@@ -116,7 +116,10 @@ public class IncidentsRepository(DazzledDbContext db) : IIncidentsRepository
                 .ToListAsync(ct);
 
             foreach (var notification in notifications)
+            {
+                notification.Status = NotificationStatuses.Acked;
                 notification.AckedAtUtc = now;
+            }
 
             await db.SaveChangesAsync(ct);
 
