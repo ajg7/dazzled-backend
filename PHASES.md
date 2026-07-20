@@ -862,6 +862,8 @@ const ackMutation = useMutation({
 
 The most important thing on this page: the **integration key / webhook URL**, displayed prominently in a copy-to-clipboard code block. This is what engineers paste into Grafana or their monitoring tool. Surface it immediately, don't bury it.
 
+It comes from a **separate request** — `GET /api/v1/services/{id}/integration-key` — not from the service detail payload, which deliberately excludes it. See §9.3.
+
 Also display: linked escalation policy (with link to edit), current on-call user from linked schedule.
 
 ---
@@ -897,7 +899,49 @@ Two sub-sections:
 
 Use **TanStack Table** for the overrides list (date, user, duration, delete action column).
 
-### 9.3 — Shared form patterns
+### 9.3 — Service creation is a two-step flow
+
+`POST /api/v1/services` does **not** return the integration key. The key is a write
+credential for the alert pipeline — anyone holding it can inject alerts and page the
+on-call — so it is exposed by exactly one endpoint,
+`GET /api/v1/services/{id}/integration-key`, which returns:
+
+```json
+{ "integrationKey": "…", "webhookUrl": "https://host/api/v1/ingest/…" }
+```
+
+`ServiceResponse` (list, detail, and create) deliberately omits it. Don't reintroduce
+it into the general read model to save a round trip — the single-endpoint boundary is
+the point.
+
+So the create flow is:
+
+```typescript
+const createMutation = useMutation({
+  mutationFn: (values: ServiceFormValues) => createService(values),
+  onSuccess: async (service) => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.services.all() })
+    // Second call — the newly created service has no key in its create response.
+    await queryClient.prefetchQuery({
+      queryKey: queryKeys.services.integrationKey(service.id),
+      queryFn: () => fetchIntegrationKey(service.id),
+    })
+    navigate({ to: '/services/$serviceId', params: { serviceId: service.id } })
+  },
+})
+```
+
+Prefetching before navigating means the detail page's webhook URL block renders
+populated rather than flashing a spinner in the one spot the admin is there to read.
+Add `integrationKey: (id: string) => ['services', id, 'integration-key'] as const` to
+the query key factory in §7.7.
+
+Prefer `webhookUrl` over `integrationKey` in the copy-to-clipboard control — it is the
+complete string an engineer pastes into Grafana. The backend builds it from the
+`PublicBaseUrl` config value, falling back to the request origin, so the frontend
+should never concatenate the ingest path itself.
+
+### 9.4 — Shared form patterns
 
 All configuration forms follow the same pattern:
 - Render inside a `<PageShell title="..." breadcrumb={[...]}>` wrapper

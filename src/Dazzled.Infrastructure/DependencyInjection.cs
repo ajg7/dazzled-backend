@@ -19,6 +19,10 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ITeamsRepository, TeamsRepository>();
+        services.AddScoped<IServicesRepository, ServicesRepository>();
+        services.AddScoped<IEscalationPoliciesRepository, EscalationPoliciesRepository>();
+        services.AddScoped<ISchedulesRepository, SchedulesRepository>();
+        services.AddScoped<IIncidentsRepository, IncidentsRepository>();
 
         services.AddMassTransit(x =>
         {

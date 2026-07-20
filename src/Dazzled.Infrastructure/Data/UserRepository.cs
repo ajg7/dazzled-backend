@@ -16,7 +16,7 @@ public class UserRepository(DazzledDbContext db) : IUserRepository
     {
         try
         {
-            var user = await db.Users.SingleOrDefaultAsync(u => u.Email == email, ct);
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
             return user is null ? Result.NotFound() : Result.Success(user);
         }
         catch (Exception ex)
@@ -29,7 +29,7 @@ public class UserRepository(DazzledDbContext db) : IUserRepository
     {
         try
         {
-            var user = await db.Users.SingleOrDefaultAsync(u => u.Id == id, ct);
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == id, ct);
             return user is null ? Result.NotFound() : Result.Success(user);
         }
         catch (Exception ex)

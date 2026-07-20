@@ -23,7 +23,7 @@ public class TeamsRepository(DazzledDbContext db) : ITeamsRepository
     {
         try
         {
-            var team = await db.Teams.SingleOrDefaultAsync(t => t.Id == teamId, ct);
+            var team = await db.Teams.FirstOrDefaultAsync(t => t.Id == teamId, ct);
             return team is null ? Result.NotFound() : Result.Success(team);
         }
         catch (Exception ex)

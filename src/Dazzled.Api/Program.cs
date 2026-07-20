@@ -1,5 +1,6 @@
 using Dazzled.Api.Hubs;
 using Dazzled.Application;
+using Dazzled.Application.Configuration;
 using Dazzled.Infrastructure;
 using Dazzled.Infrastructure.Auth;
 using Dazzled.Infrastructure.Data;
@@ -30,6 +31,10 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 // Application orchestrators
 builder.Services.AddApplication();
+
+// Bound from the configuration root so the Phase 12 compose file can set the
+// PublicBaseUrl environment variable directly, with no section prefix.
+builder.Services.Configure<PublicUrlOptions>(builder.Configuration);
 
 // OpenTelemetry metrics (scraped by Prometheus at /metrics)
 builder.Services.AddOpenTelemetry()
