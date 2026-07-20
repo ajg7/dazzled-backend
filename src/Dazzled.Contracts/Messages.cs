@@ -7,8 +7,8 @@ public enum NotificationChannel
     Email
 }
 
-public record AlertReceived(Guid AlertId, Guid ServiceId, string DedupKey, string Fingerprint);
+public record AlertReceived(int AlertId, int ServiceId, string DedupKey, string Fingerprint);
 
-public record IncidentTriggered(Guid IncidentId, Guid ServiceId, Guid PolicyId, int StepOrder);
+public record IncidentTriggered(int IncidentId, int ServiceId, int PolicyId, int StepOrder);
 
-public record NotificationRequested(Guid IncidentId, Guid UserId, NotificationChannel Channel);
+public record NotificationRequested(int IncidentId, Guid UserId, NotificationChannel Channel);

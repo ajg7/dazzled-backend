@@ -68,4 +68,40 @@ public class TeamsRepository(DazzledDbContext db) : ITeamsRepository
             return Result.Error(ex.Message);
         }
     }
+
+    public async Task<Result<TeamMember>> AddTeamMemberAsync(int teamId, Guid userId, CancellationToken ct = default)
+    {
+        try
+        {
+            if (!await db.Teams.AnyAsync(t => t.Id == teamId, ct))
+                return Result.NotFound($"No team with id {teamId} exists.");
+
+            if (!await db.Users.AnyAsync(user => user.Id == userId, ct))
+                return Result.Invalid(new ValidationError
+                {
+                    Identifier = nameof(userId),
+                    ErrorMessage = $"No user with id {userId} exists."
+                });
+
+            if (await db.TeamMembers.AnyAsync(tm => tm.TeamId == teamId && tm.UserId == userId, ct))
+                return Result.Conflict($"User {userId} is already a member of team {teamId}.");
+
+            var member = new TeamMember { TeamId = teamId, UserId = userId };
+            db.TeamMembers.Add(member);
+            await db.SaveChangesAsync(ct);
+
+            return Result.Created(member);
+        }
+        catch (DbUpdateException)
+        {
+            // (TeamId, UserId) is the composite primary key, so a concurrent add that
+            // slipped past the check above lands here. Same outcome either way — the
+            // user is on the team — so report it as the conflict it is, not a 500.
+            return Result.Conflict($"User {userId} is already a member of team {teamId}.");
+        }
+        catch (Exception ex)
+        {
+            return Result.Error(ex.Message);
+        }
+    }
 }

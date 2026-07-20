@@ -1,7 +1,15 @@
+using Dazzled.Domain.Entities;
 using Dazzled.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace Dazzled.Application.EscalationPolicies;
+
+/// <summary>
+/// A step together with the targets it pages. A step alone is not actionable — the
+/// §9.1 builder and the Phase 4 escalation engine both need to know who it reaches —
+/// so reads return the pair rather than making every caller stitch them back together.
+/// </summary>
+public record EscalationStepDetail(EscalationStep Step, List<EscalationTarget> Targets);
 
 public record EscalationPolicyRequest(
     [Required][MaxLength(200)] string Name,

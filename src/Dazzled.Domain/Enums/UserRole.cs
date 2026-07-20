@@ -1,6 +1,6 @@
 namespace Dazzled.Domain.Enums;
 public enum UserRole
 {
-    Admin,
+    Admin = 1,
     Responder
 }

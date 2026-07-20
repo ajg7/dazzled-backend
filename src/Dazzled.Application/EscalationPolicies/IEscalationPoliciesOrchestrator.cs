@@ -15,10 +15,11 @@ public interface IEscalationPoliciesOrchestrator
 
     Task<Result<EscalationPolicy>> UpdatePolicy(int policyId, EscalationPolicyRequest request, CancellationToken ct = default);
 
-    Task<Result<List<EscalationStep>>> GetSteps(int policyId, CancellationToken ct = default);
+    /// <summary>Returns the policy's steps, each with its targets, ordered by step order.</summary>
+    Task<Result<List<EscalationStepDetail>>> GetSteps(int policyId, CancellationToken ct = default);
 
     /// <summary>Returns <see cref="ResultStatus.Created"/> on success.</summary>
-    Task<Result<EscalationStep>> AddStep(int policyId, EscalationStepRequest request, CancellationToken ct = default);
+    Task<Result<EscalationStepDetail>> AddStep(int policyId, EscalationStepRequest request, CancellationToken ct = default);
 
-    Task<Result<EscalationStep>> UpdateStep(int policyId, int stepId, EscalationStepRequest request, CancellationToken ct = default);
+    Task<Result<EscalationStepDetail>> UpdateStep(int policyId, int stepId, EscalationStepRequest request, CancellationToken ct = default);
 }

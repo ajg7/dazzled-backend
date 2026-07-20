@@ -14,4 +14,7 @@ public class TeamsOrchestrator(ITeamsRepository teamsRepository) : ITeamsOrchest
 
     public Task<Result<List<TeamMember>>> GetTeamMembers(int teamId, CancellationToken ct = default) =>
         teamsRepository.GetTeamMembersAsync(teamId, ct);
+
+    public Task<Result<TeamMember>> AddTeamMember(int teamId, Guid userId, CancellationToken ct = default) =>
+        teamsRepository.AddTeamMemberAsync(teamId, userId, ct);
 }

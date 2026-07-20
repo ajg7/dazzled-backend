@@ -14,6 +14,7 @@ namespace Dazzled.Api.Controllers.Users;
 public class UsersController(IUsersOrchestrator usersOrchestrator) : ControllerBase
 {
     [HttpGet]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     [TranslateResultToActionResult]
     public async Task<Result<List<UserResponse>>> GetUsers()
     {
@@ -22,7 +23,7 @@ public class UsersController(IUsersOrchestrator usersOrchestrator) : ControllerB
     }
 
     [HttpPost]
-    [Authorize(Roles = nameof(UserRole.Admin))]
+    [AllowAnonymous]
     [TranslateResultToActionResult]
     public async Task<Result<UserResponse>> CreateUser(UserCreationRequest request)
     {

@@ -68,7 +68,9 @@ Everything in the MVP serves this loop. Nothing is built that doesn't.
 
 ---
 
-## Phase 0 — `dazzled-infra`: Foundation
+## Phase 0 — `dazzled-infra`: Foundation ✅ DONE
+
+**Status: ✅ Done** — _completed 2026-07-19._ The full backing stack (MSSQL, RabbitMQ, Grafana, Mailpit, ngrok) comes up via `docker compose up` in the `dazzled-infra` repo. This unblocks Phase 3, which is the first backend phase that needs a live RabbitMQ to exercise `AlertReceivedConsumer` end to end.
 
 **Goal:** Every developer can `docker compose up` and have the full backing service stack running locally with zero manual setup.
 
@@ -286,16 +288,25 @@ Notifications       — Id, IncidentId, UserId, Channel (SMS|Voice|Email),
                        ProviderMessageId, SentAtUtc, AckedAtUtc
 ```
 
+**Primary key convention:** `User.Id` is a `Guid`. Every other entity uses an `int` identity
+key. Users are the one entity whose IDs travel outside the system — they appear in JWT `sub`
+claims, ack links, and Twilio callbacks — so they get non-enumerable IDs. Everything else is
+internal and gets the cheaper, narrower key. `Service.IntegrationKey` remains a `Guid`
+regardless: it is a lookup credential, not a primary key. Message contracts in §1.6 follow this
+same split.
+
 **Fingerprint / DedupKey is the most critical design decision.** Grafana sends a `fingerprint` field — use it verbatim as `DedupKey`. For generic webhooks, hash `ServiceId + payload.dedupKey` (caller-supplied) or fall back to `ServiceId + payload.title`. Never create two open incidents from the same `ServiceId + DedupKey`.
 
 ### 1.6 — MassTransit message contracts (`Dazzled.Contracts`)
 
 ```csharp
-public record AlertReceived(Guid AlertId, Guid ServiceId, string DedupKey, string Fingerprint);
-public record IncidentTriggered(Guid IncidentId, Guid ServiceId, Guid PolicyId, int StepOrder);
-public record NotificationRequested(Guid IncidentId, Guid UserId, NotificationChannel Channel);
+public record AlertReceived(int AlertId, int ServiceId, string DedupKey, string Fingerprint);
+public record IncidentTriggered(int IncidentId, int ServiceId, int PolicyId, int StepOrder);
+public record NotificationRequested(int IncidentId, Guid UserId, NotificationChannel Channel);
 // Channel: SMS | Voice | Email
 ```
+
+Note the `UserId` on `NotificationRequested` is the lone `Guid`, per the key convention in §1.5.
 
 These live in `Dazzled.Contracts` so both producer (API) and consumer (Infrastructure) reference the same types without circular dependencies.
 
@@ -315,7 +326,9 @@ This ensures "write Incident + publish event" is one atomic DB transaction. A cr
 
 ---
 
-## Phase 2 — `dazzled-backend`: CRUD Foundations
+## Phase 2 — `dazzled-backend`: CRUD Foundations ✅ DONE
+
+**Status: ✅ Done** — _completed 2026-07-19._ Solution builds clean (0 warnings, 0 errors). All 30 endpoints in §2.1 are routed, plus read endpoints the §9 config pages need (`GET` by id and sub-collection reads). §2.2 on-call resolution is implemented in `SchedulesOrchestrator.GetOnCallNow` and exposed at `GET /schedules/{id}/oncall-now`. Every controller sits behind `[Authorize]` with writes gated to `Admin`, with one deliberate exception: `POST /api/v1/users` is `[AllowAnonymous]` (see §2.3). Test coverage is still deferred to Phase 11. **Ready for Phase 3.**
 
 **Goal:** All configuration entities are readable and writable via REST API. Frontend can configure the entire system before the alert pipeline is built.
 
@@ -371,6 +384,22 @@ Keep it simple for MVP: one rotation type (weekly round-robin).
 ```
 
 No multi-layer schedules. No business-hours restrictions. Deliberate v2 cut.
+
+### 2.3 — User creation is anonymous
+
+`POST /api/v1/users` is `[AllowAnonymous]`. Every other write in the API requires an `Admin`
+token, but user creation cannot — there has to be a way to get the first account into an empty
+database, and self-registration is the MVP answer rather than a seeded credential.
+
+The consequence to keep in view: `UserCreationRequest` carries `Role`, so an anonymous caller
+can create an `Admin`. That is acceptable for a single-team MVP behind a private network. Two
+things must change before this is exposed publicly:
+
+- Ignore or reject the `Role` field on anonymous creation — force `Responder`, and require an
+  existing `Admin` token to mint another `Admin`.
+- Gate registration behind an invite token, or close it entirely once the first `Admin` exists.
+
+Tracked as a hardening item for §11, not a Phase 2 gap.
 
 ---
 
@@ -1179,9 +1208,9 @@ Don't run `Database.Migrate()` in `Program.cs` in production — it's a deployme
 
 | Phase | Repo | Deliverable |
 |---|---|---|
-| 0 | infra | Full backing stack running via `docker compose up` |
+| 0 | infra | ✅ **Done** — Full backing stack running via `docker compose up` |
 | 1 | backend | ✅ **Done** — Running API: auth, migrations, MassTransit, Hangfire wired |
-| 2 | backend | All CRUD endpoints for Users, Services, Policies, Schedules |
+| 2 | backend | ✅ **Done** — All CRUD endpoints for Users, Teams, Services, Policies, Schedules, Incidents |
 | 3 | backend | Ingest endpoint → Alert → Incident via RabbitMQ consumers |
 | 4 | backend | Escalation engine with Hangfire timeouts |
 | 5 | backend | Twilio SMS + Voice, SMTP email dispatch + ack webhooks |
